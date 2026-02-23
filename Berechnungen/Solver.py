@@ -1,6 +1,7 @@
 import numpy as np
 from .Solver_Test_1 import solve as solve_lin
 
+
 class Solver:
     def __init__(self):
         pass
@@ -45,3 +46,28 @@ class Solver:
         print("F shape:", F.shape)
         u = solve_lin(K.copy(), F.copy(), randbedingungen)
         return u, fhg_map
+
+    def feder_energie(self, feder, u, fhg_map):
+        i = feder.knoten1.id
+        j = feder.knoten2.id
+        bi = fhg_map[i]
+        bj = fhg_map[j]
+        dux = u[bi] - u[bj]
+        duy = u[bi+1] - u[bj+1]
+        c, s, L = feder.direction()
+        delta = c*dux + s*duy
+        k = feder.k()
+        E = 0.5 *k *delta**2
+        return E
+    
+    def knoten_signifikanz(self, struktur, u, fhg_map):
+        W = {knoten_id: 0 for knoten_id in fhg_map.keys()}
+        for feder in struktur.federn:
+            i = feder.knoten1.id
+            j = feder.knoten2.id
+            if i not in fhg_map or j not in fhg_map:
+                continue
+            E =Solver.feder_energie(self, feder, u, fhg_map)
+            W[i] += E
+            W[j] += E
+        return W
