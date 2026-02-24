@@ -2,11 +2,11 @@
 
 from .Knoten import Knoten
 from .Feder import Feder
+from .Struktur import Struktur
 
 
 class StrukturBuilder:
     """Statische Klassemethoden zum Erstellen verschiedener Strukturgeometrien."""
-    
     @staticmethod
     def build_rechteck(struktur, breite, hoehe, num_x, num_y):
         #Erstellt eine Rechtecksgeometrie mit Knoten und Kanten 
