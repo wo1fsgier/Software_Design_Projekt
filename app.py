@@ -1,11 +1,13 @@
 import streamlit as st
 import matplotlib.pyplot as plt
+import os
 
 from Datenstrukturen.Struktur import Struktur
 from Datenstrukturen.StrukturBuilder import StrukturBuilder
 from Berechnungen.Optimizer import Optimizer
 from Berechnungen.Solver import Solver
 from StrukturPlot import plot_structure
+from Struktur_Speicher import save_structure
 
 # ---------------------------Streamlit App --------------------------- #
 st.set_page_config(layout="wide")
@@ -25,9 +27,6 @@ with st.sidebar:
         num_y = st.number_input("Number of points in vertical direction", min_value=2, value=21, step=1)
         breite = st.number_input("Width of the structure", min_value=1, value=600, step=1)
         hoehe = st.number_input("Height of the structure", min_value=1, value=200, step=1)
-        #step = st.number_input("Step between points", min_value=0.1, value=10.0, step=0.1)
-        #breite = (int(num_x) - 1) * float(step)
-        #hoehe  = (int(num_y) - 1) * float(step)
         create = st.form_submit_button("Create model")
     if create:
         struktur = Struktur()
@@ -152,6 +151,9 @@ with tab_ergebnis:
         st.subheader("Status")
         st.write("Federn:", len(s.federn))
         st.write("Knoten:", len(s.massepunkte))
+        if st.button("Save structure"):
+            save_structure(s, "saved_model.json")  # save_structure müsste du noch implementieren
+            st.success("Structure saved successfully!")
 # ---------- Debug  ----------
 with tab_msg:
     st.subheader("History")

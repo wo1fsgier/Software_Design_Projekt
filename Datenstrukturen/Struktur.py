@@ -15,7 +15,6 @@ class Struktur:
         self.knoten_federn = {} # Dict der Federn pro Knoten {knoten_id: [federn]}
         self.kraftvektor = None # Kraftvektor für die Struktur
         self.fixe_dofs = [] # Liste der fixen DOFs (Lager)
-        self.loslager_id = None
         self.festlager_id = None
         self.loslager_id = None
 
@@ -125,3 +124,27 @@ class Struktur:
             return
         k.force_x = 0.0
         k.force_y = 0.0
+
+    def get_massepunkte(self):
+        knoten_liste = []
+        for k in self.massepunkte.values():
+            knoten_liste.append({
+                'id': k.id,
+                'x': k.x,
+                'y': k.y,
+                'force_x': k.force_x,
+                'force_y': k.force_y,
+                'fixed_x': k.fixed_x,
+                'fixed_y': k.fixed_y
+            })
+        return knoten_liste
+    
+    def get_federn(self):
+        feder_liste = []
+        for f in self.federn:
+            feder_liste.append({
+                'knoten1_id': f.knoten1.id,
+                'knoten2_id': f.knoten2.id,
+                'EA': f.EA
+            })
+        return feder_liste
