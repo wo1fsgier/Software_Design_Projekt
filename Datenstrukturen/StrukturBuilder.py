@@ -11,6 +11,19 @@ class StrukturBuilder:
     def bottom_left_id(struktur):
         
         return min(struktur.massepunkte.values(), key=lambda k: (-k.y, k.x)).id
+    
+    @staticmethod
+    def find_nearest_node_id(struktur, x, y):
+        return min(struktur.massepunkte.values(),
+            key=lambda k: (k.x - x) ** 2 + (k.y - y) ** 2).id
+    
+    @staticmethod
+    def set_support(s, old_id, x, y, setter):
+        if old_id is not None:
+            s.unset_knoten_fixed(old_id)
+        new_id = StrukturBuilder.find_nearest_node_id(s, x, y)
+        setter(new_id)
+        return new_id
 
     @staticmethod
     def bottom_right_id(struktur):

@@ -15,6 +15,9 @@ class Struktur:
         self.knoten_federn = {} # Dict der Federn pro Knoten {knoten_id: [federn]}
         self.kraftvektor = None # Kraftvektor für die Struktur
         self.fixe_dofs = [] # Liste der fixen DOFs (Lager)
+        self.loslager_id = None
+        self.festlager_id = None
+        self.loslager_id = None
 
     def add_feder(self, feder):
         """Registriert eine Feder in der Struktur und aktualisiert die Knoten-Feder-Zuordnung."""
@@ -73,10 +76,11 @@ class Struktur:
 
         return self.knoten_federn.get(knoten_id, [])
     
-    def set_knoten_force(self, knoten_id, force_x=None, force_y=None):
-        
-        if knoten_id in self.massepunkte:
-            self.massepunkte[knoten_id].set_force(force_x, force_y)
+    def set_knoten_force(self, knoten_id, force_x=0, force_y=0):
+        k = self.massepunkte[knoten_id]
+        k.force_x = float(force_x)
+        k.force_y = float(force_y)
+        self.lastknoten_id = knoten_id
 
     def set_knoten_fixed(self, knoten_id, fixed_x=None, fixed_y=None):
         
@@ -99,4 +103,25 @@ class Struktur:
             if knoten.x == x_min or knoten.x == x_max:
                 knoten.set_fixed(fixed_x=True, fixed_y=True)
 
+    def set_loslager(self, knoten_id):
+        self.loslager_id = knoten_id
+        self.set_knoten_fixed(knoten_id, fixed_y=True)
     
+    def set_festlager(self, knoten_id):
+        self.festlager_id = knoten_id
+        self.set_knoten_fixed(knoten_id, fixed_x=True, fixed_y=True)
+
+    def unset_knoten_fixed(self, knoten_id):
+        k = self.massepunkte.get(knoten_id)
+        if k is None:
+            return
+        k.fixed_x = False
+        k.fixed_y = False
+    
+    
+    def unset_knoten_force(self, knoten_id):
+        k = self.massepunkte.get(knoten_id)
+        if k is None:
+            return
+        k.force_x = 0.0
+        k.force_y = 0.0
