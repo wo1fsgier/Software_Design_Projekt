@@ -16,15 +16,18 @@ if "optimized" not in st.session_state:
     st.session_state["optimized"] = False
 if "history" not in st.session_state:
     st.session_state["history"] = []
+
 # --Sidebar--#
 with st.sidebar:
     st.header("Modell")
     with st.form("create_model_form"):
         num_x = st.number_input("Number of points in horizontal direction", min_value=2, value=61, step=1)
         num_y = st.number_input("Number of points in vertical direction", min_value=2, value=21, step=1)
-        step = st.number_input("Step between points", min_value=0.1, value=10.0, step=0.1)
-        breite = (int(num_x) - 1) * float(step)
-        hoehe  = (int(num_y) - 1) * float(step)
+        breite = st.number_input("Width of the structure", min_value=1, value=600, step=1)
+        hoehe = st.number_input("Height of the structure", min_value=1, value=200, step=1)
+        #step = st.number_input("Step between points", min_value=0.1, value=10.0, step=0.1)
+        #breite = (int(num_x) - 1) * float(step)
+        #hoehe  = (int(num_y) - 1) * float(step)
         create = st.form_submit_button("Create model")
     if create:
         struktur = Struktur()
@@ -61,9 +64,9 @@ with tab_setup:
         st.markdown("### Fixations")
         with st.form("fixation_form"):
             default_loslager_x = 0
-            default_loslager_y = (num_y - 1) * step
-            default_festlager_x = (num_x - 1) * step
-            default_festlager_y = (num_y - 1) * step
+            default_loslager_y = s.hoehe
+            default_festlager_x = s.breite
+            default_festlager_y = s.hoehe
             loslager_x, festlager_x = st.columns(2)
             with loslager_x:
                 los_x = st.number_input("Loslager X", value=default_loslager_x)
@@ -84,7 +87,7 @@ with tab_setup:
     with force:
         st.markdown("### Forces")
         with st.form("force_form"):
-            default_kraft_x =(num_x - 1) * step / 2
+            default_kraft_x = s.breite / 2
             default_kraft_y = 100
             Position, f = st.columns(2)
             with Position:

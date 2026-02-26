@@ -54,16 +54,19 @@ class StrukturBuilder:
         struktur.massepunkte = {}
         struktur.federn = []
         struktur.knoten_federn = {}
+        struktur.breite = breite
+        struktur.hoehe = hoehe
+        struktur.num_x = num_x
+        struktur.num_y = num_y
 
         if num_x < 1 or num_y < 1:
             raise ValueError("num_x und num_y müssen mindestens 1 sein.")
         
-        
-        dx = breite / (num_x - 1) if num_x > 1 else 0
-        dy = hoehe / (num_y - 1) if num_y > 1 else 0
+        struktur.dx = breite / (num_x - 1) if num_x > 1 else 0
+        struktur.dy = hoehe / (num_y - 1) if num_y > 1 else 0
         
         print(f"Grid: {num_x} × {num_y} Knoten")
-        print(f"Schrittweiten: dx={dx:.4f}, dy={dy:.4f}")
+        print(f"Schrittweiten: dx={struktur.dx:.4f}, dy={struktur.dy:.4f}")
         
         # Erstellt die Knoten in einem Grid
         knoten_grid = {}  
@@ -71,8 +74,8 @@ class StrukturBuilder:
         
         for j in range(num_y):
             for i in range(num_x):
-                x = i * dx
-                y = hoehe - j * dy  
+                x = i * struktur.dx
+                y = struktur.hoehe - j * struktur.dy  
                 knoten = Knoten(knoten_id, x, y)
                 knoten_grid[(i, j)] = knoten
                 struktur.massepunkte[knoten_id] = knoten
