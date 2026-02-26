@@ -19,19 +19,6 @@ def plot_structure(struktur, title="Structure"):
     ax.invert_yaxis()
     return fig
 
-def pick_bottom_left_id(s): #Loslager unten links
-    return min(s.massepunkte.values(), key=lambda k: ( -k.y, k.x )).id
-
-def pick_bottom_right_id(s): # Festlager unten rechts
-    return min(s.massepunkte.values(), key=lambda k: ( -k.y, -k.x )).id
- 
-def pick_top_middle_id(s): # Kraft oben Mitte
-    y_min = min(k.y for k in s.massepunkte.values())
-    top = [k for k in s.massepunkte.values() if abs(k.y - y_min) < 1e-12]
-    x_center = 0.5 * (min(k.x for k in top) + max(k.x for k in top))
-    return min(top, key=lambda k: abs(k.x - x_center)).id
-
-
 st.title("Topologieoptimierung")
 
 num_x = st.number_input("Number of points in horizontal direction", min_value=2, value=61, step=1)
@@ -55,12 +42,12 @@ if st.button("Create model"):
         num_y=int(num_y)
     )
     
-    bl = pick_bottom_left_id(struktur)
-    br = pick_bottom_right_id(struktur)
+    bl = StrukturBuilder.bottom_left_id(struktur)
+    br = StrukturBuilder.bottom_right_id(struktur)
 
     struktur.set_knoten_fixed(bl, fixed_y=True)                 # Loslager
     struktur.set_knoten_fixed(br, fixed_x=True, fixed_y=True)   # Festlager
-    top_mid = pick_top_middle_id(struktur)
+    top_mid = StrukturBuilder.top_middle_id(struktur)
     struktur.set_knoten_force(top_mid, force_y=100.0) # Kraft 
 
     st.session_state["struktur"] = struktur

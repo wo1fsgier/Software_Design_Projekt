@@ -1,5 +1,5 @@
 import numpy as np
-from .Solver_Test_1 import solve as solve_lin
+from .Solver_Vorlage import solve as solve_lin
 
 
 class Solver:
