@@ -21,18 +21,17 @@ def plot_structure(struktur, title="Structure"):
 
 st.title("Topologieoptimierung")
 
+breite = st.number_input("Width of the rectangle", min_value=1, value=600, step=1)
+hoehe = st.number_input("Height of the rectangle", min_value=1, value=200, step=1)
 num_x = st.number_input("Number of points in horizontal direction", min_value=2, value=61, step=1)
 num_y = st.number_input("Number of points in vertical direction", min_value=2, value=21, step=1)
-step = st.number_input("Step between points", min_value=0.1, value=10.0, step=0.1)
+precentage_remaining = st.slider("Target percentage of remaining material", min_value=0.01, max_value=1.0, value=0.39, step=0.01)
 
 if "struktur" not in st.session_state:
     st.session_state["struktur"] = None
 
 if st.button("Create model"):
     struktur = Struktur()
-
-    breite = (int(num_x) - 1) * float(step)
-    hoehe  = (int(num_y) - 1) * float(step)
 
     StrukturBuilder.build_rechteck(
         struktur=struktur,
@@ -62,7 +61,7 @@ if st.session_state["struktur"] is not None:
         history = opt.optimize(
             st.session_state["struktur"],
             solver,
-            target_fraction_remaining=0.39,
+            target_fraction_remaining= precentage_remaining,
             max_iter=120,
             remove_per_iter=8
         )
