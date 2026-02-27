@@ -4,7 +4,7 @@ class Optimizer:
     def __init__(self, msg=False):
         self.msg = msg
 
-    def optimize(self, struktur, solver, target_fraction_remaining=0.39, max_iter=100, remove_per_iter=12):
+    def optimize(self, struktur, solver, target_fraction_remaining=0.39, max_iter=100, remove_per_iter=12, on_step=None, plot_sec=5):
         n0 = len(struktur.massepunkte)
         target_n = max(4, int(math.ceil(n0 * target_fraction_remaining))) # target_n grenze
 
@@ -28,9 +28,9 @@ class Optimizer:
             history.append({
                 "iter": it,
                 "n_nodes": n_now,
-                "compliance": compliance,
             })
-
+            if on_step is not None and (it % plot_sec == 0):
+                    on_step(it, struktur)
             candidates = sorted(W.items(), key=lambda kv: kv[1]) # Liste nach Energie
 
             removed = 0

@@ -1,11 +1,13 @@
 import streamlit as st
 import matplotlib.pyplot as plt
+import numpy as np
 
 from Datenstrukturen.Struktur import Struktur
 from Datenstrukturen.StrukturBuilder import StrukturBuilder
 from Berechnungen.Optimizer import Optimizer
 from Berechnungen.Solver import Solver
-from StrukturPlot import plot_structure
+from StrukturPlot import plot_structure, on_step, plot_deformed
+
 
 # ---------------------------Streamlit App --------------------------- #
 st.set_page_config(layout="wide")
@@ -125,7 +127,7 @@ with tab_setup:
         optimize = st.form_submit_button("Optimize model",use_container_width=True)
     
     if optimize:
-        with st.status("Optimizing... This may take a while")as status:
+        with st.status("Optimizing... See Results table for live optimization")as status:
             solver = Solver()
             opt = Optimizer(msg=True)
             history = opt.optimize(
@@ -133,20 +135,36 @@ with tab_setup:
                 solver,
                 target_fraction_remaining= precentage_remaining,
                 max_iter=max_iter,
-                remove_per_iter=remove_per_iter
+                remove_per_iter=remove_per_iter,
+                on_step=on_step,
+                plot_sec=5
                 )
             st.session_state["history"] = history
+            u, fhg_map = solver.solve_struktur(st.session_state["struktur"])
+            st.session_state["u"] = u
+            st.session_state["fhg_map"] = fhg_map
             st.session_state["optimized"] = True
             status.update(label="DONE", state="complete")
 # --- Ergebnisse --- #
 with tab_ergebnis:
     left, right = st.columns([3, 1], gap="large")
-
     with left:
-        if st.session_state["optimized"]:
-            st.pyplot(plot_structure(s, "Optimized model"), clear_figure=True)
-        else:
-            st.pyplot(plot_structure(s, "Current model"), clear_figure=True)
+        st.session_state["plot_box"] = st.empty()
+        plot2 = st.empty() 
+    with right:
+        st.session_state["status_box"] = st.empty()
+        stop = st.button ("STOP", use_container_width=True)
+        cont =st.button ("Continue", use_container_width=True)
+    if st.session_state["optimized"]:
+        st.session_state["plot_box"].pyplot(plot_structure(s, "Optimized model"), clear_figure=True)
+        u = st.session_state.get("u")
+        fhg_map = st.session_state.get("fhg_map")
+        max_disp = np.max(np.abs(st.session_state["u"])) 
+        scale = 0.05 * max(k.x for k in s.massepunkte.values()) / max_disp # Verschiebung auf 0.5% der Breite skaliert
+        if u is not None and fhg_map is not None:
+            plot2.pyplot(plot_deformed(s, u, fhg_map, scale), clear_figure=True)
+    else:
+        st.session_state["plot_box"].pyplot(plot_structure(s, "Current model"), clear_figure=True)
 
     with right:
         st.subheader("Status")
