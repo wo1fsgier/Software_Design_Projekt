@@ -242,3 +242,4 @@ with tab_ergebnis:
 # ---------- Debug  ----------
 with tab_msg:
     st.subheader("History")
+    st.write(st.session_state.get("history", []))
