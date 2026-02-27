@@ -15,9 +15,9 @@ class Struktur:
         self.knoten_federn = {} # Dict der Federn pro Knoten {knoten_id: [federn]}
         self.kraftvektor = None # Kraftvektor für die Struktur
         self.fixe_dofs = [] # Liste der fixen DOFs (Lager)
-        self.loslager_id = None
         self.festlager_id = None
         self.loslager_id = None
+        self. lastknoten_id = None
 
     def add_feder(self, feder):
         """Registriert eine Feder in der Struktur und aktualisiert die Knoten-Feder-Zuordnung."""
@@ -77,9 +77,15 @@ class Struktur:
         return self.knoten_federn.get(knoten_id, [])
     
     def set_knoten_force(self, knoten_id, force_x=0, force_y=0):
+
+    
+        if self.lastknoten_id is not None:
+            self.unset_knoten_force(self.lastknoten_id)
+
         k = self.massepunkte[knoten_id]
         k.force_x = float(force_x)
         k.force_y = float(force_y)
+
         self.lastknoten_id = knoten_id
 
     def set_knoten_fixed(self, knoten_id, fixed_x=None, fixed_y=None):
@@ -104,10 +110,18 @@ class Struktur:
                 knoten.set_fixed(fixed_x=True, fixed_y=True)
 
     def set_loslager(self, knoten_id):
+
+        if self.loslager_id is not None:
+            self.unset_knoten_fixed(self.loslager_id)
+
         self.loslager_id = knoten_id
         self.set_knoten_fixed(knoten_id, fixed_y=True)
     
     def set_festlager(self, knoten_id):
+       
+       if self.festlager_id is not None:
+        self.unset_knoten_fixed(self.festlager_id)
+
         self.festlager_id = knoten_id
         self.set_knoten_fixed(knoten_id, fixed_x=True, fixed_y=True)
 
@@ -123,5 +137,29 @@ class Struktur:
         k = self.massepunkte.get(knoten_id)
         if k is None:
             return
-        k.force_x = 0.0
+        k.force_x = 0.0 
         k.force_y = 0.0
+
+    def get_massepunkte(self):
+        knoten_liste = []
+        for k in self.massepunkte.values():
+            knoten_liste.append({
+                'id': k.id,
+                'x': k.x,
+                'y': k.y,
+                'force_x': k.force_x,
+                'force_y': k.force_y,
+                'fixed_x': k.fixed_x,
+                'fixed_y': k.fixed_y
+            })
+        return knoten_liste
+    
+    def get_federn(self):
+        feder_liste = []
+        for f in self.federn:
+            feder_liste.append({
+                'knoten1_id': f.knoten1.id,
+                'knoten2_id': f.knoten2.id,
+                'EA': f.EA
+            })
+        return feder_liste

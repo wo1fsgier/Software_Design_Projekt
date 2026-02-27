@@ -1,5 +1,6 @@
 import streamlit as st
 import matplotlib.pyplot as plt
+import os
 import numpy as np 
 from copy import deepcopy 
 
@@ -7,14 +8,24 @@ from Datenstrukturen.Struktur import Struktur
 from Datenstrukturen.StrukturBuilder import StrukturBuilder
 from Berechnungen.Optimizer import Optimizer
 from Berechnungen.Solver import Solver
+from StrukturPlot import plot_structure
+from Struktur_Speicher import save_structure, load_structure
+
+SAVE_FILE = "saved_model.json"
 from StrukturPlot import plot_structure, on_step, plot_deformed, apply_iter_removals
 
 
 # ---------------------------Streamlit App --------------------------- #
+
 st.set_page_config(layout="wide")
 st.title("Topologieoptimierung") 
 if "struktur" not in st.session_state:
-    st.session_state["struktur"] = None
+    if os.path.exists(SAVE_FILE):
+        st.session_state["struktur"] = load_structure(SAVE_FILE)
+        st.session_state["optimized"] = False
+        st.info("Saved structure loaded.")
+    else:
+        st.session_state["struktur"] = None
 if "optimized" not in st.session_state:
     st.session_state["optimized"] = False
 if "history" not in st.session_state:
@@ -28,6 +39,7 @@ if "deformed_box" not in st.session_state:
 st.session_state.setdefault("plot_box", None)
 
 # --Sidebar--#
+
 with st.sidebar:
     st.header("Modell")
     with st.form("create_model_form"):
@@ -35,9 +47,6 @@ with st.sidebar:
         num_y = st.number_input("Number of points in vertical direction", min_value=2, value=21, step=1)
         breite = st.number_input("Width of the structure", min_value=1, value=600, step=1)
         hoehe = st.number_input("Height of the structure", min_value=1, value=200, step=1)
-        #step = st.number_input("Step between points", min_value=0.1, value=10.0, step=0.1)
-        #breite = (int(num_x) - 1) * float(step)
-        #hoehe  = (int(num_y) - 1) * float(step)
         create = st.form_submit_button("Create model")
     if create:
         struktur = Struktur()
@@ -68,15 +77,16 @@ tab_setup, tab_ergebnis, tab_msg = st.tabs(["Boundary Conditions","Results", "De
 with tab_setup:
 
 # --- Randbedingungen --- #
+
     st.subheader("Boundary Conditions")
     fixed, force = st.columns(2)
     with fixed:
         st.markdown("### Fixations")
         with st.form("fixation_form"):
             default_loslager_x = 0
-            default_loslager_y = s.hoehe
-            default_festlager_x = s.breite
-            default_festlager_y = s.hoehe
+            default_loslager_y = 0
+            default_festlager_x = 0
+            default_festlager_y = 0
             loslager_x, festlager_x = st.columns(2)
             with loslager_x:
                 los_x = st.number_input("Loslager X", value=default_loslager_x)
@@ -93,11 +103,13 @@ with tab_setup:
 
             st.session_state["optimized"] = False
             st.success("Supports updated")
+
 # --- äußere Kräfte --- #
+
     with force:
         st.markdown("### Forces")
         with st.form("force_form"):
-            default_kraft_x = s.breite / 2
+            default_kraft_x = 0
             default_kraft_y = 100
             Position, f = st.columns(2)
             with Position:
@@ -122,6 +134,7 @@ with tab_setup:
             st.session_state["optimized"] = False
             st.success("Force updated")
     st.divider()
+
 # --- Optimierung --- #
     st.markdown("### Optimization")
     with st.form("opt_form"):
@@ -168,6 +181,7 @@ with tab_setup:
             st.session_state["optimized"] = True
             st.session_state["is_optimizing"] = False
             status.update(label="DONE", state="complete")
+
 # --- Ergebnisse --- #
 with tab_ergebnis:
     left, right = st.columns([3, 1], gap="large")
@@ -188,6 +202,15 @@ with tab_ergebnis:
         st.subheader("Status")
         st.write("Federn:", len(s.federn))
         st.write("Knoten:", len(s.massepunkte))
+        if st.button("Save structure"):
+            save_structure(s, "saved_model.json")  # save_structure müsste du noch implementieren
+            st.success("Structure saved successfully!")
+
+        if os.path.exists(SAVE_FILE):
+            st.write("Saved structure exists.") 
+            if st.button("Delete saved structure"):
+                os.remove(SAVE_FILE)
+                st.success("Saved structure deleted")
         k=0
         if st.session_state["optimized"] and hist:
             max_it = len(hist)
