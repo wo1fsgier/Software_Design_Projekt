@@ -4,61 +4,51 @@ class Optimizer:
     def __init__(self, msg=False):
         self.msg = msg
 
-    def optimize(self, struktur, solver, target_fraction_remaining=0.39, max_iter=100, remove_per_iter=12):
+    def optimize(self, struktur, solver, target_fraction_remaining=0.39, max_iter=100, remove_per_iter=12, on_step=None, plot_sec=5):
         n0 = len(struktur.massepunkte)
         target_n = max(4, int(math.ceil(n0 * target_fraction_remaining))) # target_n grenze
 
         history = []
 
         for it in range(1, max_iter + 1): # jede Interation = einmal Optimieren
-
             n_now = len(struktur.massepunkte)
             if n_now <= target_n: # stoppt wenn Grenze erreicht
                 break
-
             u, fhg_map = solver.solve_struktur(struktur)
             if u is None:
                 break
-
             K, F, randbedingungen, fhg_map = solver.calculate(struktur)
             compliance = sum(u[i] * F[i] for i in range(len(u))) # Skalarprodukt
-
             W = solver.knoten_signifikanz(struktur, u, fhg_map) # Energiesumme aller Feder die an diesem Knoten hängen
-
-            history.append({
-                "iter": it,
-                "n_nodes": n_now,
-                "compliance": compliance,
-            })
-
             candidates = sorted(W.items(), key=lambda kv: kv[1]) # Liste nach Energie
 
             removed = 0
+            removed_ids = []
             
             for i, E in candidates:
-
                 if len(struktur.massepunkte) <= target_n: # stoppt wenn Grenze erreicht
                     break
-
                 if removed >= remove_per_iter:  # stoppt wenn genug gelöscht
                     break
-
                 k = struktur.massepunkte.get(i) #Knoten
                 if k is None:
                     continue
-
                 # backup damit das Löschen wieder rückgängig gemacht werden kann
                 backup = self._remove_node_temp(struktur, i)
-
                 # Fällt die Struktur auseinander? Wenn ja, dann kann das Backup restored werden
                 if not self._is_connected(struktur):
                     self._restore_node(struktur, backup)
                     continue
-
                 removed += 1
-
-                if self.msg:
-                    print(f"Iter {it}: removed {i}") #Debug-Ausgabe zur Kontrolle
+                removed_ids.append(i)
+                
+            rec = ({"iter": it,
+                    "n_nodes": n_now,
+                    "removed_ids": removed_ids,
+                })
+            history.append(rec)
+            if on_step is not None:
+                on_step(rec)
 
         return history
 
