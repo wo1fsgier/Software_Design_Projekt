@@ -1,3 +1,5 @@
+import io
+
 import streamlit as st
 import matplotlib.pyplot as plt
 import os
@@ -46,12 +48,22 @@ with st.sidebar:
             num_x=int(num_x),
             num_y=int(num_y)
         )
+        # -------------------------
+        # Standardlager & Kraft setzen
+        # -------------------------
         bl = StrukturBuilder.bottom_left_id(struktur)
         br = StrukturBuilder.bottom_right_id(struktur)
-        struktur.set_knoten_fixed(bl, fixed_y=True)                 # Loslager
-        struktur.set_knoten_fixed(br, fixed_x=True, fixed_y=True)   # Festlager
         top_mid = StrukturBuilder.top_middle_id(struktur)
-        struktur.set_knoten_force(top_mid, force_y=100.0) # Kraft 
+
+        struktur.set_knoten_fixed(bl, fixed_y=True)
+        struktur.set_knoten_fixed(br, fixed_x=True, fixed_y=True)
+        struktur.set_knoten_force(top_mid, force_y=100.0)
+
+        #Debug-Ausgabe im UI
+        st.write("📌 Default Nodes set on creation:")
+        st.write(f"Loslager ID: {bl}, x={struktur.massepunkte[bl].x}, y={struktur.massepunkte[bl].y}")
+        st.write(f"Festlager ID: {br}, x={struktur.massepunkte[br].x}, y={struktur.massepunkte[br].y}")
+        st.write(f"Kraft-Knoten ID: {top_mid}, x={struktur.massepunkte[top_mid].x}, y={struktur.massepunkte[top_mid].y}")
 
         st.session_state["struktur"] = struktur
         st.success("Model created")
@@ -93,6 +105,13 @@ with tab_setup:
             st.session_state["optimized"] = False
             st.success("Supports updated")
 
+            # -------------------------
+            # Debug-Ausgabe der manuell gesetzten Fixierungen
+            # -------------------------
+            st.write("🛠 Manually set nodes:")
+            st.write(f"Loslager ID: {los_id}, x={s.massepunkte[los_id].x}, y={s.massepunkte[los_id].y}")
+            st.write(f"Festlager ID: {fest_id}, x={s.massepunkte[fest_id].x}, y={s.massepunkte[fest_id].y}")
+
 # --- äußere Kräfte --- #
 
     with force:
@@ -113,14 +132,20 @@ with tab_setup:
             s = st.session_state["struktur"]
             if s.lastknoten_id is not None:
                 s.unset_knoten_force(s.lastknoten_id)
-            s.set_knoten_force(
-                StrukturBuilder.find_nearest_node_id(s, pos_x, pos_y),
-                force_x=Fx,
-                force_y=Fy
-            )
+
+            force_id = StrukturBuilder.find_nearest_node_id(s, pos_x, pos_y)
+            s.set_knoten_force(force_id, force_x=Fx, force_y=Fy)
 
             st.session_state["optimized"] = False
             st.success("Force updated")
+
+            # -------------------------
+            # Debug-Ausgabe der manuell gesetzten Kraft
+            # -------------------------
+            st.write("⚡ Force set on node:")
+            st.write(f"Knoten ID: {force_id}, x={s.massepunkte[force_id].x}, y={s.massepunkte[force_id].y}")
+            st.write(f"Force vector: Fx={Fx}, Fy={Fy}")
+
     st.divider()
 
 # --- Optimierung --- #
@@ -157,17 +182,38 @@ with tab_ergebnis:
 
     with left:
         if st.session_state["optimized"]:
-            st.pyplot(plot_structure(s, "Optimized model"), clear_figure=True)
+
+            fig = plot_structure(s, "Optimized model")
         else:
-            st.pyplot(plot_structure(s, "Current model"), clear_figure=True)
+            fig = plot_structure(s, "Current model")
+
+        st.pyplot(fig, clear_figure=False) #True setzen wieder
 
     with right:
         st.subheader("Status")
         st.write("Federn:", len(s.federn))
         st.write("Knoten:", len(s.massepunkte))
-        if st.button("Save structure"):
-            save_structure(s, "saved_model.json")  # save_structure müsste du noch implementieren
-            st.success("Structure saved successfully!")
+
+        '''if st.button("Download as SVG"):
+
+            fig = plot_structure(s, "Structure for Download")
+            buffer = io.StringIO()
+            fig.savefig(buffer, format="svg")
+            buffer.seek(0)
+    
+        st.download_button(
+            label="Download structure as SVG",
+            data=buffer.getvalue(),
+            file_name="structure.svg",
+            mime="image/svg+xml"
+    )
+    plt.close(fig)  # Figur wieder freigeben'''
+
+    st.divider()
+
+    if st.button("Save structure"):
+        save_structure(s, "saved_model.json")  # save_structure müsste du noch implementieren
+        st.success("Structure saved successfully!")
 
         if os.path.exists(SAVE_FILE):
             st.write("Saved structure exists.") 
