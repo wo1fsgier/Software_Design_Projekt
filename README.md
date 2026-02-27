@@ -15,7 +15,7 @@ Dabei wurden alle folgenden Minimalanforderungen umgesetzt:
 - Struktur darf nicht nicht "auseinander fallen" durch die Optimierung
 - Testen der Implementierung am Beispiel des MBB Balken
 - optimierte Geometrie als Graph herunterladbar
-- [Deployed mit streamlit](google.com)
+- [Deployed mit streamlit](https://softwaredesignprojekt-9zelr8lysndg3tsduqynjr.streamlit.app/)
 
 # Installation
 

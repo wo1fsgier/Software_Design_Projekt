@@ -227,7 +227,6 @@ with tab_ergebnis:
         ) 
         plt.close(fig)
 
-
         if st.button("Save structure"):
             save_structure(s, "saved_model.json")  # save_structure müsste du noch implementieren
             st.success("Structure saved successfully!")
