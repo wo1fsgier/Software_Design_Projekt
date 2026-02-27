@@ -212,9 +212,21 @@ with tab_ergebnis:
 
     with right:
         st.subheader("Status")
+        steps=0
+        if st.session_state["optimized"] and hist:
+            max_it = len(hist)
+            steps = st.slider("Iteration anzeigen", 0, max_it, max_it)
+        
+        if st.session_state["optimized"] and base is not None and hist:
+            view = deepcopy(base)
+            for idx in range(steps):
+                apply_iter_removals(view, hist[idx])
+        else:
+            view = st.session_state["struktur"]
+
         st.write("Federn:", len(s.federn))
         st.write("Knoten:", len(s.massepunkte))
-        fig = plot_structure(s, "Structure for Download")
+        fig = plot_structure(view, f"Structure for Download (Iteration {steps})")
         buffer = io.StringIO()
         fig.savefig(buffer, format="svg")
         buffer.seek(0)
@@ -236,10 +248,6 @@ with tab_ergebnis:
             if st.button("Delete saved structure"):
                 os.remove(SAVE_FILE)
                 st.success("Saved structure deleted")
-        steps=0
-        if st.session_state["optimized"] and hist:
-            max_it = len(hist)
-            steps = st.slider("Iteration anzeigen", 0, max_it, max_it)
     
     if st.session_state["optimized"]:
         
