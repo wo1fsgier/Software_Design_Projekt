@@ -1,5 +1,3 @@
-from time import time
-
 from Datenstrukturen.Struktur import Struktur
 from Berechnungen.Optimizer import Optimizer
 import matplotlib.pyplot as plt
@@ -41,3 +39,8 @@ def plot_deformed(struktur, u, fhg_map, scale):
     ax.set_aspect("equal")
     ax.invert_yaxis()
     ax.set_title("Deformed model")
+
+def apply_iter_removals(struktur, hist_entry):
+    for nid in hist_entry.get("removed_ids", []):
+        if nid in struktur.massepunkte:
+            struktur.remove_knoten(nid)

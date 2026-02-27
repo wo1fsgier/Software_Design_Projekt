@@ -1,12 +1,13 @@
 import streamlit as st
 import matplotlib.pyplot as plt
-import numpy as np
+import numpy as np 
+from copy import deepcopy 
 
 from Datenstrukturen.Struktur import Struktur
 from Datenstrukturen.StrukturBuilder import StrukturBuilder
 from Berechnungen.Optimizer import Optimizer
 from Berechnungen.Solver import Solver
-from StrukturPlot import plot_structure, on_step, plot_deformed
+from StrukturPlot import plot_structure, on_step, plot_deformed, apply_iter_removals
 
 
 # ---------------------------Streamlit App --------------------------- #
@@ -18,6 +19,7 @@ if "optimized" not in st.session_state:
     st.session_state["optimized"] = False
 if "history" not in st.session_state:
     st.session_state["history"] = []
+st.session_state.setdefault("plot_box", None)
 
 # --Sidebar--#
 with st.sidebar:
@@ -102,6 +104,7 @@ with tab_setup:
 
         if set_force:
             s = st.session_state["struktur"]
+
             if s.lastknoten_id is not None:
                 s.unset_knoten_force(s.lastknoten_id)
             s.set_knoten_force(
@@ -127,6 +130,7 @@ with tab_setup:
         optimize = st.form_submit_button("Optimize model",use_container_width=True)
     
     if optimize:
+        st.session_state["struktur_base"] = deepcopy(st.session_state["struktur"])
         with st.status("Optimizing... See Results table for live optimization")as status:
             solver = Solver()
             opt = Optimizer(msg=True)
@@ -139,6 +143,7 @@ with tab_setup:
                 on_step=on_step,
                 plot_sec=5
                 )
+            
             st.session_state["history"] = history
             u, fhg_map = solver.solve_struktur(st.session_state["struktur"])
             st.session_state["u"] = u
@@ -149,14 +154,26 @@ with tab_setup:
 with tab_ergebnis:
     left, right = st.columns([3, 1], gap="large")
     with left:
-        st.session_state["plot_box"] = st.empty()
-        plot2 = st.empty() 
+        plot_box = st.empty()
+        plot2 = st.empty()
     with right:
         st.session_state["status_box"] = st.empty()
-        stop = st.button ("STOP", use_container_width=True)
-        cont =st.button ("Continue", use_container_width=True)
+    hist = st.session_state.get("history", [])
+    base = st.session_state.get("struktur_base")
     if st.session_state["optimized"]:
-        st.session_state["plot_box"].pyplot(plot_structure(s, "Optimized model"), clear_figure=True)
+        
+
+        if base is None or not hist:
+            plot_box.pyplot(plot_structure(s, "Optimized model"), clear_figure=True)
+        else:
+            max_it = len(hist)
+            k = st.slider("Iteration anzeigen", 0, max_it, max_it)
+            view = deepcopy(base)
+        
+            for idx in range(k):
+                apply_iter_removals(view, hist[idx])
+            plot_box.pyplot(plot_structure(view, f"Iteration {k}"), clear_figure=True)
+
         u = st.session_state.get("u")
         fhg_map = st.session_state.get("fhg_map")
         max_disp = np.max(np.abs(st.session_state["u"])) 
@@ -164,12 +181,15 @@ with tab_ergebnis:
         if u is not None and fhg_map is not None:
             plot2.pyplot(plot_deformed(s, u, fhg_map, scale), clear_figure=True)
     else:
-        st.session_state["plot_box"].pyplot(plot_structure(s, "Current model"), clear_figure=True)
+        plot_box.pyplot(plot_structure(s, "Current model"), clear_figure=True)
 
     with right:
         st.subheader("Status")
         st.write("Federn:", len(s.federn))
         st.write("Knoten:", len(s.massepunkte))
+        if hist and base:
+            st.write("max base id:", max(base.massepunkte.keys()))
+            st.write("sample removed:", hist[0].get("removed_ids", [])[:10])
 # ---------- Debug  ----------
 with tab_msg:
     st.subheader("History")

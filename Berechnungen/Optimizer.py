@@ -25,15 +25,12 @@ class Optimizer:
 
             W = solver.knoten_signifikanz(struktur, u, fhg_map) # Energiesumme aller Feder die an diesem Knoten hängen
 
-            history.append({
-                "iter": it,
-                "n_nodes": n_now,
-            })
             if on_step is not None and (it % plot_sec == 0):
                     on_step(it, struktur)
             candidates = sorted(W.items(), key=lambda kv: kv[1]) # Liste nach Energie
 
             removed = 0
+            removed_ids = []
             
             for i, E in candidates:
 
@@ -56,9 +53,19 @@ class Optimizer:
                     continue
 
                 removed += 1
+                
+                removed_ids.append(i)
 
                 if self.msg:
                     print(f"Iter {it}: removed {i}") #Debug-Ausgabe zur Kontrolle
+                
+                history.append({
+                    "iter": it,
+                    "n_nodes": n_now,
+                    "removed_ids": removed_ids,
+                })
+                if on_step is not None and (it % plot_sec == 0):
+                    on_step(it, struktur)  
 
         return history
 
