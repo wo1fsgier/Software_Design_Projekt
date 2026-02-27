@@ -68,7 +68,7 @@ Wichtige Eigenschaften:
 
 ---
 # UML Diagramm
-![UML](img/uml.png)
+![UML](img/uml_diagram.svg)
 # Projektstruktur
 
 ```
