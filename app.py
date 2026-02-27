@@ -12,7 +12,7 @@ from Berechnungen.Solver import Solver
 from Struktur_Speicher import save_structure, load_structure
 
 SAVE_FILE = "saved_model.json"
-from StrukturPlot import plot_structure, on_step, plot_deformed, apply_iter_removals
+from StrukturPlot import plot_structure, on_step, plot_deformed, apply_iter_removals, plot_stress_structure
 
 
 # ---------------------------Streamlit App --------------------------- #
@@ -44,6 +44,8 @@ if "live_plot_box" not in st.session_state:
 if "deformed_box" not in st.session_state:
     st.session_state["deformed_box"] = None
 st.session_state.setdefault("plot_box", None)
+if "stress_box" not in st.session_state:
+    st.session_state["stress_box"] = None
 
 # --Sidebar--#
 
@@ -206,6 +208,9 @@ with tab_ergebnis:
         if st.session_state["deformed_box"] is None:
             st.session_state["deformed_box"] = st.empty()
         deformed_box = st.session_state["deformed_box"]
+        if st.session_state["stress_box"] is None:
+            st.session_state["stress_box"] = st.empty()
+        stress_box = st.session_state["stress_box"]
 
     hist = st.session_state.get("history", [])
     base = st.session_state.get("struktur_base")
@@ -223,9 +228,11 @@ with tab_ergebnis:
                 apply_iter_removals(view, hist[idx])
         else:
             view = st.session_state["struktur"]
+            solver = Solver()
+            u_view, fhg_view = solver.solve_struktur(view)
 
-        st.write("Federn:", len(s.federn))
-        st.write("Knoten:", len(s.massepunkte))
+        st.write("Federn:", len(view.federn))
+        st.write("Knoten:", len(view.massepunkte))
         fig = plot_structure(view, f"Structure for Download (Iteration {steps})")
         buffer = io.StringIO()
         fig.savefig(buffer, format="svg")
@@ -267,7 +274,8 @@ with tab_ergebnis:
             max_disp = np.max(np.abs(st.session_state["u"])) 
             scale = 0.05 * max(k.x for k in s.massepunkte.values()) / max_disp # Verschiebung auf 0.5% der Breite skaliert
             if u is not None and fhg_map is not None:
-                st.session_state["deformed_box"].pyplot(plot_deformed(s, u, fhg_map, scale),clear_figure=True)
+                deformed_box.pyplot(plot_deformed(view, u, fhg_map, scale), clear_figure=True)
+                stress_box.pyplot(plot_stress_structure(view, u, fhg_map), clear_figure=True)
     else:
         plot_box.pyplot(plot_structure(s, "Current model"), clear_figure=True)
 
