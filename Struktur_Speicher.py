@@ -11,6 +11,7 @@ def save_structure(struktur, filename):
         'Federn': struktur.get_federn(),
         'Loslager_id': struktur.loslager_id,
         'Festlager_id': struktur.festlager_id,
+        'Lastknoten_id': struktur.lastknoten_id,
     }
     
     with open(filename, 'w') as f:
@@ -45,5 +46,6 @@ def load_structure(filename):
 
     s.loslager_id = data["Loslager_id"]
     s.festlager_id = data["Festlager_id"]
+    s.lastknoten_id = data["Lastknoten_id"]
 
     return s

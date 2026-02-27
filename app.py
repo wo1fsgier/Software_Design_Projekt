@@ -12,6 +12,7 @@ from Struktur_Speicher import save_structure, load_structure
 SAVE_FILE = "saved_model.json"
 
 # ---------------------------Streamlit App --------------------------- #
+
 st.set_page_config(layout="wide")
 st.title("Topologieoptimierung") 
 if "struktur" not in st.session_state:
@@ -27,6 +28,7 @@ if "history" not in st.session_state:
     st.session_state["history"] = []
 
 # --Sidebar--#
+
 with st.sidebar:
     st.header("Modell")
     with st.form("create_model_form"):
@@ -64,6 +66,7 @@ tab_setup, tab_ergebnis, tab_msg = st.tabs(["Boundary Conditions","Results", "De
 with tab_setup:
 
 # --- Randbedingungen --- #
+
     st.subheader("Boundary Conditions")
     fixed, force = st.columns(2)
     with fixed:
@@ -89,7 +92,9 @@ with tab_setup:
 
             st.session_state["optimized"] = False
             st.success("Supports updated")
+
 # --- äußere Kräfte --- #
+
     with force:
         st.markdown("### Forces")
         with st.form("force_form"):
@@ -117,6 +122,7 @@ with tab_setup:
             st.session_state["optimized"] = False
             st.success("Force updated")
     st.divider()
+
 # --- Optimierung --- #
     st.markdown("### Optimization")
     with st.form("opt_form"):
@@ -144,6 +150,7 @@ with tab_setup:
             st.session_state["history"] = history
             st.session_state["optimized"] = True
             status.update(label="DONE", state="complete")
+
 # --- Ergebnisse --- #
 with tab_ergebnis:
     left, right = st.columns([3, 1], gap="large")
