@@ -4,7 +4,7 @@ class Optimizer:
     def __init__(self, msg=False):
         self.msg = msg
 
-    def optimize(self, struktur, solver, target_fraction_remaining=0.39, max_iter=100, remove_per_iter=12, on_step=None, plot_sec=5):
+    def optimize(self, struktur, solver, target_fraction_remaining=0.39, max_iter=80, remove_per_iter=8, on_step=None, plot_sec=5):
         n0 = len(struktur.massepunkte)
         target_n = max(4, int(math.ceil(n0 * target_fraction_remaining))) # target_n grenze
 

@@ -92,14 +92,15 @@ SOFTWARE_DESIGN_PROJEKT
 ```
 
 # Testfall: MBB-Beam
-
+**Wichtig: Beim Start des Programms sind alle Randbedingungen, Auflagekräfte schon festgelegt für einen MBB-Beam**
 Standardkonfiguration:
 
 - Links unten: Loslager
 - Rechts unten: Festlager
 - Kraft: Vertikal am oberen Mittelpunkt
 
-![Testfall](img/mbb.png)
+![Testfall](img/mbbeam.png)
+![Testfall](img/verformung.png)
 
 ---
 

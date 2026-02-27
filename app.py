@@ -154,7 +154,7 @@ with tab_setup:
         with t:
             precentage_remaining = st.slider("Target percentage of remaining material", min_value=0.01, max_value=1.0, value=0.39, step=0.01)
         with i:
-            max_iter = st.number_input("Max iterations", min_value=1, value=120, step=1)
+            max_iter = st.number_input("Max iterations", min_value=1, value=80, step=1)
         with r:
             remove_per_iter = st.number_input("Elements to remove per iteration", min_value=1, value=8, step=1)
 
