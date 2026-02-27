@@ -100,7 +100,7 @@ Standardkonfiguration:
 - Kraft: Vertikal am oberen Mittelpunkt
 
 ![Testfall](img/mbbeam.png)
-![Testfall](img/verformung.png)
+![Testfall2](img/Verformung.png)
 
 ---
 
