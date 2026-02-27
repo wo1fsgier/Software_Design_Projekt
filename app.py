@@ -7,13 +7,20 @@ from Datenstrukturen.StrukturBuilder import StrukturBuilder
 from Berechnungen.Optimizer import Optimizer
 from Berechnungen.Solver import Solver
 from StrukturPlot import plot_structure
-from Struktur_Speicher import save_structure
+from Struktur_Speicher import save_structure, load_structure
+
+SAVE_FILE = "saved_model.json"
 
 # ---------------------------Streamlit App --------------------------- #
 st.set_page_config(layout="wide")
 st.title("Topologieoptimierung") 
 if "struktur" not in st.session_state:
-    st.session_state["struktur"] = None
+    if os.path.exists(SAVE_FILE):
+        st.session_state["struktur"] = load_structure(SAVE_FILE)
+        st.session_state["optimized"] = False
+        st.info("Saved structure loaded.")
+    else:
+        st.session_state["struktur"] = None
 if "optimized" not in st.session_state:
     st.session_state["optimized"] = False
 if "history" not in st.session_state:
@@ -63,9 +70,9 @@ with tab_setup:
         st.markdown("### Fixations")
         with st.form("fixation_form"):
             default_loslager_x = 0
-            default_loslager_y = s.hoehe
-            default_festlager_x = s.breite
-            default_festlager_y = s.hoehe
+            default_loslager_y = 0
+            default_festlager_x = 0
+            default_festlager_y = 0
             loslager_x, festlager_x = st.columns(2)
             with loslager_x:
                 los_x = st.number_input("Loslager X", value=default_loslager_x)
@@ -86,7 +93,7 @@ with tab_setup:
     with force:
         st.markdown("### Forces")
         with st.form("force_form"):
-            default_kraft_x = s.breite / 2
+            default_kraft_x = 0
             default_kraft_y = 100
             Position, f = st.columns(2)
             with Position:
@@ -154,6 +161,13 @@ with tab_ergebnis:
         if st.button("Save structure"):
             save_structure(s, "saved_model.json")  # save_structure müsste du noch implementieren
             st.success("Structure saved successfully!")
+
+        if os.path.exists(SAVE_FILE):
+            st.write("Saved structure exists.") 
+            if st.button("Delete saved structure"):
+                os.remove(SAVE_FILE)
+                st.success("Saved structure deleted")
+
 # ---------- Debug  ----------
 with tab_msg:
     st.subheader("History")
