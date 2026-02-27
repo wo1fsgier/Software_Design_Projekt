@@ -30,11 +30,9 @@ if "struktur" not in st.session_state:
     if os.path.exists(SAVE_FILE) and os.path.getsize(SAVE_FILE) > 0:
         try:
             st.session_state["struktur"] = load_structure(SAVE_FILE)
-        except Exception:
-            try:
-                os.remove(SAVE_FILE)
-            except Exception:
-                pass
+            st.info("Saved structure loaded.")
+        except Exception as e:
+            pass
 if "optimized" not in st.session_state:
     st.session_state["optimized"] = False
 if "history" not in st.session_state:
