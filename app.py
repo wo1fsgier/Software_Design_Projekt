@@ -1,6 +1,7 @@
 import streamlit as st
 import matplotlib.pyplot as plt
 import os
+import io
 import numpy as np 
 from copy import deepcopy 
 
@@ -8,7 +9,6 @@ from Datenstrukturen.Struktur import Struktur
 from Datenstrukturen.StrukturBuilder import StrukturBuilder
 from Berechnungen.Optimizer import Optimizer
 from Berechnungen.Solver import Solver
-from StrukturPlot import plot_structure
 from Struktur_Speicher import save_structure, load_structure
 
 SAVE_FILE = "saved_model.json"
@@ -20,12 +20,21 @@ from StrukturPlot import plot_structure, on_step, plot_deformed, apply_iter_remo
 st.set_page_config(layout="wide")
 st.title("Topologieoptimierung") 
 if "struktur" not in st.session_state:
-    if os.path.exists(SAVE_FILE):
-        st.session_state["struktur"] = load_structure(SAVE_FILE)
-        st.session_state["optimized"] = False
-        st.info("Saved structure loaded.")
-    else:
-        st.session_state["struktur"] = None
+    st.session_state["struktur"] = None
+    st.session_state["optimized"] = False
+    st.session_state["history"] = []
+    st.session_state["struktur_base"] = None
+    st.session_state["u"] = None
+    st.session_state["fhg_map"] = None
+
+    if os.path.exists(SAVE_FILE) and os.path.getsize(SAVE_FILE) > 0:
+        try:
+            st.session_state["struktur"] = load_structure(SAVE_FILE)
+        except Exception:
+            try:
+                os.remove(SAVE_FILE)
+            except Exception:
+                pass
 if "optimized" not in st.session_state:
     st.session_state["optimized"] = False
 if "history" not in st.session_state:
@@ -47,7 +56,7 @@ with st.sidebar:
         num_y = st.number_input("Number of points in vertical direction", min_value=2, value=21, step=1)
         breite = st.number_input("Width of the structure", min_value=1, value=600, step=1)
         hoehe = st.number_input("Height of the structure", min_value=1, value=200, step=1)
-        create = st.form_submit_button("Create model")
+        create = st.form_submit_button("Create model", disabled=st.session_state["struktur"] is not None)
     if create:
         struktur = Struktur()
         StrukturBuilder.build_rechteck(
@@ -65,6 +74,11 @@ with st.sidebar:
         struktur.set_knoten_force(top_mid, force_y=100.0) # Kraft 
 
         st.session_state["struktur"] = struktur
+        st.session_state["optimized"] = False
+        st.session_state["history"] = []
+        st.session_state["struktur_base"] = deepcopy(struktur)
+        st.session_state["u"] = None
+        st.session_state["fhg_map"] = None
         st.success("Model created")
 
 # --- Dashboard --- #
@@ -202,6 +216,20 @@ with tab_ergebnis:
         st.subheader("Status")
         st.write("Federn:", len(s.federn))
         st.write("Knoten:", len(s.massepunkte))
+        fig = plot_structure(s, "Structure for Download")
+        buffer = io.StringIO()
+        fig.savefig(buffer, format="svg")
+        buffer.seek(0)
+
+        st.download_button(
+            label="Download structure as SVG",
+            data=buffer.getvalue(),
+            file_name="structure.svg",
+            mime="image/svg+xml"
+        ) 
+        plt.close(fig)
+
+
         if st.button("Save structure"):
             save_structure(s, "saved_model.json")  # save_structure müsste du noch implementieren
             st.success("Structure saved successfully!")
@@ -211,10 +239,10 @@ with tab_ergebnis:
             if st.button("Delete saved structure"):
                 os.remove(SAVE_FILE)
                 st.success("Saved structure deleted")
-        k=0
+        steps=0
         if st.session_state["optimized"] and hist:
             max_it = len(hist)
-            k = st.slider("Iteration anzeigen", 0, max_it, max_it)
+            steps = st.slider("Iteration anzeigen", 0, max_it, max_it)
     
     if st.session_state["optimized"]:
         
@@ -224,9 +252,9 @@ with tab_ergebnis:
             
             view = deepcopy(base)
             
-            for idx in range(k):
+            for idx in range(steps):
                 apply_iter_removals(view, hist[idx])
-            plot_box.pyplot(plot_structure(view, f"Iteration {k}"), clear_figure=True)
+            plot_box.pyplot(plot_structure(view, f"Iteration {steps}"), clear_figure=True)
 
         if not st.session_state.get("is_optimizing", False):
             u = st.session_state.get("u")

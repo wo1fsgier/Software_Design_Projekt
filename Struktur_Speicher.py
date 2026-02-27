@@ -17,12 +17,15 @@ def save_structure(struktur, filename):
     with open(filename, 'w') as f:
         json.dump(data, f, indent=4)
 
-def load_structure(filename):
+def load_structure(filename) -> Struktur:
 
     with open(filename, "r") as f:
         data = json.load(f)
 
     s = Struktur()
+    s.massepunkte = {}
+    s.federn = []
+    s.knoten_federn = {}
 
     for k in data["Knoten"]:
         massepunkt = Knoten(
