@@ -6,10 +6,10 @@ import streamlit as st
 def plot_structure(struktur, title="Structure"):
     fig, ax = plt.subplots()
     for f in struktur.federn:
-        ax.plot([f.knoten1.x, f.knoten2.x], [f.knoten1.y, f.knoten2.y])
+        ax.plot([f.knoten1.x, f.knoten2.x], [f.knoten1.y, f.knoten2.y], color="red", linewidth=1)
     xs = [k.x for k in struktur.massepunkte.values()]
     ys = [k.y for k in struktur.massepunkte.values()]
-    ax.scatter(xs, ys, s=10)
+    ax.scatter(xs, ys, s=10, color="blue")
     ax.set_aspect("equal", adjustable="box")
     ax.set_title(title)
     ax.invert_yaxis()
@@ -39,6 +39,7 @@ def plot_deformed(struktur, u, fhg_map, scale):
     ax.set_aspect("equal")
     ax.invert_yaxis()
     ax.set_title("Deformed model")
+    return fig
 
 def apply_iter_removals(struktur, hist_entry):
     for nid in hist_entry.get("removed_ids", []):

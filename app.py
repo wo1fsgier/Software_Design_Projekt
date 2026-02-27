@@ -19,6 +19,12 @@ if "optimized" not in st.session_state:
     st.session_state["optimized"] = False
 if "history" not in st.session_state:
     st.session_state["history"] = []
+if "is_optimizing" not in st.session_state:
+    st.session_state["is_optimizing"] = False
+if "live_plot_box" not in st.session_state:
+    st.session_state["live_plot_box"] = None
+if "deformed_box" not in st.session_state:
+    st.session_state["deformed_box"] = None
 st.session_state.setdefault("plot_box", None)
 
 # --Sidebar--#
@@ -130,7 +136,18 @@ with tab_setup:
         optimize = st.form_submit_button("Optimize model",use_container_width=True)
     
     if optimize:
+        st.session_state["is_optimizing"] = True
         st.session_state["struktur_base"] = deepcopy(st.session_state["struktur"])
+        base = deepcopy(st.session_state["struktur"])
+        view = deepcopy(base)
+        plot_box = st.session_state["live_plot_box"]
+        def on_step_live(rec):
+            apply_iter_removals(view, rec)
+            plot_box.pyplot(
+                plot_structure(view, f"Iteration {rec['iter']}"),
+                clear_figure=True
+            )
+
         with st.status("Optimizing... See Results table for live optimization")as status:
             solver = Solver()
             opt = Optimizer(msg=True)
@@ -140,8 +157,8 @@ with tab_setup:
                 target_fraction_remaining= precentage_remaining,
                 max_iter=max_iter,
                 remove_per_iter=remove_per_iter,
-                on_step=on_step,
-                plot_sec=5
+                on_step=on_step_live,
+                plot_sec=1
                 )
             
             st.session_state["history"] = history
@@ -149,47 +166,56 @@ with tab_setup:
             st.session_state["u"] = u
             st.session_state["fhg_map"] = fhg_map
             st.session_state["optimized"] = True
+            st.session_state["is_optimizing"] = False
             status.update(label="DONE", state="complete")
 # --- Ergebnisse --- #
 with tab_ergebnis:
     left, right = st.columns([3, 1], gap="large")
+   
     with left:
-        plot_box = st.empty()
-        plot2 = st.empty()
-    with right:
-        st.session_state["status_box"] = st.empty()
+        if st.session_state["live_plot_box"] is None:
+            st.session_state["live_plot_box"] = st.empty()
+        plot_box = st.session_state["live_plot_box"]
+
+        if st.session_state["deformed_box"] is None:
+            st.session_state["deformed_box"] = st.empty()
+        deformed_box = st.session_state["deformed_box"]
+
     hist = st.session_state.get("history", [])
     base = st.session_state.get("struktur_base")
-    if st.session_state["optimized"]:
-        
-
-        if base is None or not hist:
-            plot_box.pyplot(plot_structure(s, "Optimized model"), clear_figure=True)
-        else:
-            max_it = len(hist)
-            k = st.slider("Iteration anzeigen", 0, max_it, max_it)
-            view = deepcopy(base)
-        
-            for idx in range(k):
-                apply_iter_removals(view, hist[idx])
-            plot_box.pyplot(plot_structure(view, f"Iteration {k}"), clear_figure=True)
-
-        u = st.session_state.get("u")
-        fhg_map = st.session_state.get("fhg_map")
-        max_disp = np.max(np.abs(st.session_state["u"])) 
-        scale = 0.05 * max(k.x for k in s.massepunkte.values()) / max_disp # Verschiebung auf 0.5% der Breite skaliert
-        if u is not None and fhg_map is not None:
-            plot2.pyplot(plot_deformed(s, u, fhg_map, scale), clear_figure=True)
-    else:
-        plot_box.pyplot(plot_structure(s, "Current model"), clear_figure=True)
 
     with right:
         st.subheader("Status")
         st.write("Federn:", len(s.federn))
         st.write("Knoten:", len(s.massepunkte))
-        if hist and base:
-            st.write("max base id:", max(base.massepunkte.keys()))
-            st.write("sample removed:", hist[0].get("removed_ids", [])[:10])
+        k=0
+        if st.session_state["optimized"] and hist:
+            max_it = len(hist)
+            k = st.slider("Iteration anzeigen", 0, max_it, max_it)
+    
+    if st.session_state["optimized"]:
+        
+        if base is None or not hist:
+            plot_box.pyplot(plot_structure(s, "Optimized model"), clear_figure=True)
+        else:
+            
+            view = deepcopy(base)
+            
+            for idx in range(k):
+                apply_iter_removals(view, hist[idx])
+            plot_box.pyplot(plot_structure(view, f"Iteration {k}"), clear_figure=True)
+
+        if not st.session_state.get("is_optimizing", False):
+            u = st.session_state.get("u")
+            fhg_map = st.session_state.get("fhg_map")
+            max_disp = np.max(np.abs(st.session_state["u"])) 
+            scale = 0.05 * max(k.x for k in s.massepunkte.values()) / max_disp # Verschiebung auf 0.5% der Breite skaliert
+            if u is not None and fhg_map is not None:
+                st.session_state["deformed_box"].pyplot(plot_deformed(s, u, fhg_map, scale),clear_figure=True)
+    else:
+        plot_box.pyplot(plot_structure(s, "Current model"), clear_figure=True)
+
+
 # ---------- Debug  ----------
 with tab_msg:
     st.subheader("History")
